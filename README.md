@@ -1,0 +1,2 @@
+# MILe
+An unofficial implement of MILe in this [paper](https://openaccess.thecvf.com/content/CVPR2022/html/Rajeswar_Multi-Label_Iterated_Learning_for_Image_Classification_With_Label_Ambiguity_CVPR_2022_paper.html).
