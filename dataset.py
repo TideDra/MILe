@@ -1,21 +1,12 @@
-from torch.utils.data import Dataset
 from torchvision.models import ResNet50_Weights,ResNet18_Weights
 import torch
 from config import config
-from prefetch_generator import BackgroundGenerator
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder,MNIST
 import os
 import json
-from PIL import Image
 from random import random
 import numpy as np
-class DataLoaderX(DataLoader):
-    '''
-    A replacement to DataLoader which improves the pipeline performance.
-    '''
-    def __iter__(self):
-        return BackgroundGenerator(super().__iter__())
 
 
 class ImageNetReal(ImageFolder):
@@ -68,7 +59,7 @@ class ImageNetReal(ImageFolder):
     
     def getDataloader(self,model):
         collate_fn=self.CollateFn(model)
-        dataloader = DataLoaderX(self,
+        dataloader = DataLoader(self,
                             batch_size=config.batch_size,
                             shuffle=False,
                             collate_fn=collate_fn,
@@ -85,7 +76,7 @@ class ImageNetTrain:
         self.dataset = ImageFolder(root,transform=self.preprocess)
     
     def getDataloader(self):
-        dataloader = DataLoaderX(self.dataset,
+        dataloader = DataLoader(self.dataset,
                             batch_size=config.batch_size,
                             shuffle=True,
                             pin_memory=True,
@@ -113,10 +104,10 @@ class MultilabelMNIST:
             for i in range(0,len(batch),9):
                 if i+8>=len(batch):
                     break
-                up = torch.concatenate([batch[i][0],batch[i+1][0],batch[i+2][0]],dim=1)
-                mid = torch.concatenate([batch[i+3][0],batch[i+4][0],batch[i+5][0]],dim=1)
-                down = torch.concatenate([batch[i+6][0],batch[i+7][0],batch[i+8][0]],dim=1)
-                combine = torch.concatenate([up,mid,down],dim=0)
+                up = torch.cat([batch[i][0],batch[i+1][0],batch[i+2][0]],dim=1)
+                mid = torch.cat([batch[i+3][0],batch[i+4][0],batch[i+5][0]],dim=1)
+                down = torch.cat([batch[i+6][0],batch[i+7][0],batch[i+8][0]],dim=1)
+                combine = torch.cat([up,mid,down],dim=0)
                 combine = combine.permute(2,0,1)
                 combine = self.preprocess(combine)
                 imgs.append(combine)
