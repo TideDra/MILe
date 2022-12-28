@@ -3,6 +3,7 @@ import os
 import torch
 from tqdm import tqdm
 import torch.nn.functional as F
+from sklearn.metrics import f1_score
 def save_model(model, name):
     print('Saving checkpoint...\n')
 
@@ -37,50 +38,58 @@ def eval(model,imgNet_dataloader):
         sample_num=0
         hard_correct_num=0
         soft_correct_num=0
+        total_real_f1=0
         total_f1=0
         total_coverage=0
-        for batch_num,(input,label,real_label) in tbar:
-            input=input.to(config.device)
-            label=label.to(config.device)
-            logits = model(input)
-            if config.schema=='softmax':
-                prob = torch.softmax(logits)
-            if config.schema=='sigmoid' or config.schema=='MILe':
-                prob = torch.sigmoid(logits)
-            hard_pred = torch.argmax(prob,dim=1)
-            
-            hard_correct_num += (hard_pred == label).sum().item()
-            hard_pred=hard_pred.tolist()
-            for idx,p in enumerate(hard_pred):
-                if len(real_label[idx]) and p in real_label[idx]:
-                    soft_correct_num+=1
-            
-            raw_soft_pred = (prob>config.rho).nonzero().tolist()
-            soft_pred = [[]]*len(real_label)
-            for p in raw_soft_pred:
-                soft_pred[p[0]].append(p[1])         
-            
-            for i in range(len(real_label)):
-                tp,fp=0,0
-                pred_set = soft_pred[i]
-                real_set = real_label[i]
-                for p in pred_set:
-                    if p in real_set:
-                        tp+=1
-                    else:
-                        fp+=1
-                fn = len(real_set)-tp
-                if 2*tp+fp+fn!=0:
-                    total_f1 += 2*tp/(2*tp+fp+fn)
-                if len(real_set):
-                    total_coverage+=len(pred_set)/len(real_set)
-            
-            sample_num+=len(label)
-            tbar.update()
+        f1_num=0
+        with torch.no_grad():
+            for batch_num,(input,label,real_label) in tbar:
+                input=input.to(config.device)
+                label=label.to(config.device)
+                logits = model(input)
+                if config.schema=='softmax':
+                    prob = F.softmax(logits,dim=1)
+                if config.schema=='sigmoid' or config.schema=='MILe':
+                    prob = torch.sigmoid(logits)
+                hard_pred = torch.argmax(prob,dim=1)
 
-        real_f1=round(total_f1/sample_num,3)
+                hard_correct_num += (hard_pred == label).sum().item()
+                hard_pred=hard_pred.tolist()
+                for idx,p in enumerate(hard_pred):
+                    if len(real_label[idx]) and p in real_label[idx]:
+                        soft_correct_num+=1
+
+                raw_soft_pred = (prob>config.rho).nonzero().tolist()
+                soft_pred = [[] for i in range(len(real_label))]
+                for p in raw_soft_pred:
+                    soft_pred[p[0]].append(p[1])         
+
+                for i in range(len(real_label)):
+                    tp,fp=0,0
+                    pred_set = soft_pred[i]
+                    real_set = real_label[i]
+                    for p in pred_set:
+                        if p in real_set:
+                            tp+=1
+                        else:
+                            fp+=1
+                    fn = len(real_set)-tp
+                    if 2*tp+fp+fn!=0:
+                        total_real_f1 += 2*tp/(2*tp+fp+fn)
+                    try:
+                        total_f1+=2*(tp/(tp+fp)*(tp/len(real_set)))/((tp/(tp+fp))+tp/len(real_set))
+                    except:
+                        pass
+                    if len(real_set):
+                        total_coverage+=len(pred_set)/len(real_set)
+                    f1_num+=1
+                sample_num+=len(label)
+                tbar.update()
+
+        real_f1=round(total_real_f1/sample_num,3)
+        f1=round(total_f1/sample_num,3)
         real_acc=round(soft_correct_num/sample_num,3)
         acc=round(hard_correct_num/sample_num,3)
-        label_coverage=round(total_coverage/sample_num,3)
-        print(f"acc:{acc} real-acc:{real_acc} real-f1:{real_f1} label_coverage:{label_coverage} ")
+        label_coverage=round(total_coverage/f1_num,3)
+        print(f"acc:{acc} real-acc:{real_acc} real-f1:{real_f1} f1:{f1} label_coverage:{label_coverage} ")
         return acc,real_f1,real_acc,label_coverage
