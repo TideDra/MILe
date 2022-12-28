@@ -15,7 +15,7 @@ I have implemented some benchmarks used in the paper.
 - ImageNet1k (for training) and ImageNet Real (for validating)
 - Multi-label MNIST
 
-## Getting start
+## Get Started
 Run the following command to train MILe.
 ```
 python MILe.py
