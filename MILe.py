@@ -1,12 +1,11 @@
 import torch
-import torchvision
 from torchvision.models import resnet18,resnet50,ResNet18_Weights
 from config import config
 from tqdm import tqdm
 import torch.nn.functional as F
 from dataset import ImageNetReal,ImageNetTrain,MultilabelMNIST
 from utils import eval,save_model
-from itertools import cycle
+
 if __name__=='__main__':
     print('loading model...')
     if config.model=='resnet50':
