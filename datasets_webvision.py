@@ -76,7 +76,7 @@ class WebvisionTrain:
             self.preprocess = ResNet18_Weights.DEFAULT.transforms()
         if model == 'resnet50':
             self.preprocess = ResNet50_Weights.DEFAULT.transforms()
-        self.dataset = Webvision(root, split='train', transform=self.preprocess)
+        self.dataset = Webvision_Flickr(root, split='train', transform=self.preprocess)
 
     def getDataloader(self):
         dataloader = DataLoaderX(self.dataset,
