@@ -17,7 +17,7 @@ class DataLoaderX(DataLoader):
     def __iter__(self):
         return BackgroundGenerator(super().__iter__())
 
-class WebVision_Flickr(Dataset):
+class WebVision(Dataset):
     # path是json文件路径,root是图片路径
     def __init__(self, root, path) -> None:
         super().__init__()
@@ -77,7 +77,7 @@ class WebvisionTrain:
             self.preprocess = ResNet18_Weights.DEFAULT.transforms()
         if model == 'resnet50':
             self.preprocess = ResNet50_Weights.DEFAULT.transforms()
-        self.dataset = ImageFolder(root, split='train', transform=self.preprocess)
+        self.dataset = WebVision(root, split='train', transform=self.preprocess)
 
     def getDataloader(self):
         dataloader = DataLoaderX(self.dataset,
