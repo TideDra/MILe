@@ -3,6 +3,7 @@ from torchvision.models import ResNet50_Weights, ResNet18_Weights
 import torch
 from config import config
 from torch.utils.data import DataLoader
+from torchvision.datasets import ImageFolder
 from prefetch_generator import BackgroundGenerator
 import os
 import json
@@ -76,7 +77,7 @@ class WebvisionTrain:
             self.preprocess = ResNet18_Weights.DEFAULT.transforms()
         if model == 'resnet50':
             self.preprocess = ResNet50_Weights.DEFAULT.transforms()
-        self.dataset = Webvision_Flickr(root, split='train', transform=self.preprocess)
+        self.dataset = ImageFolder(root, split='train', transform=self.preprocess)
 
     def getDataloader(self):
         dataloader = DataLoaderX(self.dataset,
