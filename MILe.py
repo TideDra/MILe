@@ -1,5 +1,5 @@
 import torch
-from torchvision.models import resnet18,resnet50,ResNet18_Weights
+from torchvision.models import resnet18,resnet50,ResNet18_Weights,ResNet50_Weights
 from config import config
 from tqdm import tqdm
 import torch.nn.functional as F
@@ -12,8 +12,8 @@ if __name__=='__main__':
         teacher = resnet50()
         student = resnet50()
     elif config.model=='resnet18':
-        teacher = resnet18(weights=ResNet18_Weights.DEFAULT)
-        student = resnet18(weights=ResNet18_Weights.DEFAULT)
+        teacher = resnet18()
+        student = resnet18()
     elif config.model=='resnet18-10':
         teacher = resnet18()
         student = resnet18()
@@ -131,22 +131,21 @@ if __name__=='__main__':
                       total=len(train_dataloader),
                       desc='epoch:{}/{} interactive phase'.format(epoch, config.epoch_num),) as tbar:
                 teacher.train()
-                #for batch_num,(input,label) in tbar:
-                #    input=input.to(config.device)
-                #    label=label.to(config.device)
-                #    logits = teacher(input)
-                #    if config.schema=='sigmoid':
-                #        label=F.one_hot(label,num_classes=logits.shape[-1])
-                #        label=label.float()
-                #    loss = loss_fn(logits,label)
-                #    t_loss+=loss.item()
-                #    optimizer.zero_grad()
-                #    loss.backward()
-                #    optimizer.step()
-                #    tbar.set_postfix(loss="%.4f" % (t_loss / batch_num))
-                #    tbar.update()
+                for batch_num,(input,label) in tbar:
+                    input=input.to(config.device)
+                    label=label.to(config.device)
+                    logits = teacher(input)
+                    if config.schema=='sigmoid':
+                        label=F.one_hot(label,num_classes=logits.shape[-1])
+                        label=label.float()
+                    loss = loss_fn(logits,label)
+                    t_loss+=loss.item()
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+                    tbar.set_postfix(loss="%.4f" % (t_loss / batch_num))
+                    tbar.update()
                 acc,real_f1,real_acc,label_coverage=eval(teacher,val_dataloader)
-                print(acc)
                 lr_scheduler.step(real_f1)
                 with open('output.txt','a') as f:
                     f.write(f"epoch:{epoch} acc:{acc} real-acc:{real_acc} real-f1:{real_f1} label_coverage:{label_coverage}\n")

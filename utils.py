@@ -81,7 +81,7 @@ def eval(model,imgNet_dataloader):
                     except:
                         pass
                     if len(real_set):
-                        total_coverage+=len(pred_set)/len(real_set)
+                        total_coverage+=len(pred_set)
                     f1_num+=1
                 sample_num+=len(label)
                 tbar.update()
